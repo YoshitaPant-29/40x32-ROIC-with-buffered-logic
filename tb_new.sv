@@ -9,9 +9,34 @@ module tb;
     logic [ROWS-1:0] row_enable;
     logic done;
 
-    roic_shift #(COLS, ROWS) dut (
-        .* 
-    );
+    roic_shift #(COLS, ROWS) dut (.*);
+    //adding scoreboard here --Observes DUT output
+//Compares with expected behavior
+//Does NOT affect hardware
+     int expected_row = 0;
+    int expected_col = 0;
+
+    always @(posedge clk) begin
+        if (!rst && col_enable != 0 && row_enable != 0) begin
+
+            if (col_enable != (1 << expected_col))
+                $error("Column mismatch at time %t", $time);
+
+            if (row_enable != (1 << expected_row))
+                $error("Row mismatch at time %t", $time);
+
+            if (expected_col < COLS-1)
+                expected_col++;
+            else begin
+                expected_col = 0;
+                expected_row++;
+            end
+             if (expected_row >= ROWS) begin
+            $display("All rows scanned successfully");
+            $finish;
+        end
+        end
+    end
   //to print all values to check whether all are touched
 always @(posedge clk) begin
     if (!rst && !done)
@@ -20,7 +45,7 @@ end
     // Clock
     always #5 clk = ~clk;
   
-  //asserions
+  //assertions
   property one_hot_col;
     @(posedge clk) disable iff (rst)
     $onehot0(col_enable);
@@ -35,13 +60,15 @@ endproperty
 
 assert property (one_hot_row);
   
-  //to define covergroups
+  //to define covergroups --functional coverage
   covergroup cg @(posedge clk);
     coverpoint col_enable;
     coverpoint row_enable;
 endgroup
   
   cg cov = new();
+  //sampling it --added functional coverage to ensure all scan combinations are exercised
+  
   always @(posedge clk)
     cov.sample();
 //to dump the file
