@@ -31,7 +31,7 @@ module tb;
                 expected_col = 0;
                 expected_row++;
             end
-             if (expected_row >= ROWS) begin
+            if (expected_row >= ROWS) begin// extra added just to ensure whethe all pixels are scanned or not 
             $display("All rows scanned successfully");
             $finish;
         end
